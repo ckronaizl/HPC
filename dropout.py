@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow import keras
+import sys
 
 
 class RegularNetwork(keras.Model):
@@ -43,26 +44,33 @@ class DropoutNetwork(keras.Model):
         return output_layer
 
 
-def evaluate(input_model, train_images, train_labels, validation_images, validation_labels):
+def evaluate(input_model, train_images, train_labels, validation_images, validation_labels, epoch):
     sgd = keras.optimizers.SGD(lr=0.01)
     input_model.compile(loss="sparse_categorical_crossentropy", optimizer=sgd, metrics=["accuracy"])
-    input_model.fit(train_images, train_labels, epochs=60, validation_data=(validation_images, validation_labels))
+    input_model.fit(train_images, train_labels, epochs=epoch, validation_data=(validation_images, validation_labels))
 
     loss, accuracy = input_model.evaluate(test_images, test_labels)
     return loss, accuracy
 
 
-def dropout(data: list):
+def dropout(data: list, epoch):
     model = DropoutNetwork()
-    return evaluate(model, data[0], data[1], data[2], data[3])
+    return evaluate(model, data[0], data[1], data[2], data[3], epoch)
 
 
-def regular(data: list):
+def regular(data: list, epoch):
     model = RegularNetwork()
-    return evaluate(model, data[0], data[1], data[2], data[3])
+    return evaluate(model, data[0], data[1], data[2], data[3], epoch)
 
 
 if __name__ == '__main__':
+    # set up a default epoch to be used
+    args = sys.argv
+    try:
+        epoch_value = int(args[1])
+    except IndexError:
+        epoch_value = 60  # default value of 60
+
     (train_images, train_labels), (test_images, test_labels) = keras.datasets.fashion_mnist.load_data()
     train_images = train_images / 255.0
     test_images = test_images / 255.0
@@ -71,8 +79,8 @@ if __name__ == '__main__':
 
     data = [train_images, train_labels, validation_images, validation_labels]
 
-    dropout_loss, dropout_accuracy = dropout(data)
-    reg_loss, reg_accuracy = regular(data)
+    dropout_loss, dropout_accuracy = dropout(data, epoch_value)
+    reg_loss, reg_accuracy = regular(data, epoch_value)
 
     print("\n\n")
     print("Dropout")
