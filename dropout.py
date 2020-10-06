@@ -1,3 +1,4 @@
+# from: https://towardsdatascience.com/understanding-and-implementing-dropout-in-tensorflow-and-keras-a8a3a02c1bfa
 import tensorflow as tf
 from tensorflow import keras
 import sys
