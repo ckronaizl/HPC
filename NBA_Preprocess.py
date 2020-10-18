@@ -11,14 +11,14 @@ def ts_calc(team):
     if team[16] == "0" or team[16] == "-" or team[16] == 0:
         return 0
     else:
-        return str(100*int(team[8])/(2*(int(team[10]) + (0.44*int(team[16])))))
+        return float(100*int(team[8])/(2*(int(team[10]) + (0.44*int(team[16])))))
 
 def oer_calc(team):
     #tmPOSS = team[27]
     #tmPTS = team[8]
     if len(team) > 27:
         if float(team[27]) > 0:
-            return str(100*int(team[8])/float(team[27]))
+            return float(100*int(team[8])/float(team[27]))
     return 0
 
 def possessions_calc(team, opponent):
@@ -41,11 +41,15 @@ def possessions_calc(team, opponent):
         possessions = (int(team[10])+0.4*int(team[16])-1.07*(int(team[18])/(int(team[18])+int(opponent[19])))*(int(team[10])-int(team[9]))+int(team[24]))
         possessions = 0.5*(possessions+(int(opponent[10])+0.4*int(opponent[16])-1.07*(int(opponent[18])/(int(opponent[18])+int(team[19])))*(int(opponent[10])-int(opponent[9]))+int(opponent[24])))
     except:
-        return "0"
-    return str(possessions)
+        return 0
+    return float(possessions)
 
 #begin main
 team_avg = []
+
+#these are backwards -> teststring = training data
+teststring = "C:/local/nba_stats/NBA_train_83-15.csv"
+trainstring = "C:/local/nba_stats/NBA_test_15-20.csv"
 
 for stats_file in os.listdir("C:/local/nba_stats/"):
 
@@ -63,6 +67,18 @@ for stats_file in os.listdir("C:/local/nba_stats/"):
 
         for x in range(1,len(stats)):
             #stats[x][26] = stats[x][26][:len(stats[x][26])-1]
+
+            if stats[x][6] == "W":
+                stats[x][6] = 1
+            else:
+                stats[x][6] = 0
+
+            for reval in range(6,len(stats[x])-1):
+                if stats[x][reval] == "-":
+                    stats[x][reval] = 0
+                else:
+                    stats[x][reval] = float(stats[x][reval])
+
             if len(stats[x]) < 28:
 
                 for y in range(x,len(stats)):
@@ -112,22 +128,40 @@ for stats_file in os.listdir("C:/local/nba_stats/"):
                 continue
         print(games)
         tempstring = stats_file[:len(stats_file)-4] + "_adv.csv"
+        stats[0].append("POSS")
+        stats[0].append("TS%")
+        stats[0].append("OER")
         with open("C:/local/nba_stats/" + tempstring,'w',newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerows(stats)
-            #for line in stats:
-            #    csvwriter.writerow(line)
-            #csvfile.writelines("\n")
 
 
         #calculate averages
         for x in range(0,len(team_avg)-1):
             for y in range(1,len(team_avg[x])-1):
-                team_avg[x][y] = float(team_avg[x][y]) / team_avg[x][len(team_avg[x])-1]
+                team_avg[x][y] = float(team_avg[x][y]) / float(team_avg[x][len(team_avg[x])-1])
             tempstring = stats_file[:len(stats_file) - 4] + "_avg.csv"
+        team_avg.insert(0,["TEAM","PTS","FGM","FGA","FG%","3PM","3PA","3P%","FTM","FTA","FT%","OREB","DREB","REB","AST","STL","BLK","TOV","PF","+/-","POSS","TS%","OER","GP"])
+
         with open("C:/local/nba_stats/" + tempstring, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerows(team_avg)
+
+
+        #build test & train datasets
+        filenum = stats_file.find("201")
+        #temp = stats_file[filenum + 3]
+        if filenum == -1:
+
+            with open(teststring, 'a', newline='') as testcsv:
+                csvwriter = csv.writer(testcsv)
+                csvwriter.writerows(stats[1:])
+
+        else:
+            #temp = stats_file[filenum + 3]
+            with open(trainstring, 'a', newline='') as traincsv:
+                csvwriter = csv.writer(traincsv)
+                csvwriter.writerows(stats[1:])
 
 
     else:
