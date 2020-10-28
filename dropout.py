@@ -113,12 +113,19 @@ if __name__ == '__main__':
     model = DropoutNetwork(nba_train_features)
 
     # fit our model to data
-    history = model.fit(nba_train_features, nba_train_labels, epochs=100, validation_data=(nba_val_features, nba_val_labels), batch_size=32)
+    start = time.time()
+    history = model.fit(train_images, train_labels, epochs=100, validation_data=(validation_images, validation_labels), batch_size=32)
+    end = time.time()
 
     # evaluate model with testing data
-    loss, accuracy = model.evaluate(nba_test_features, nba_test_labels)
-    print(" this be loss -" + str(loss))
-    print(" this be acc -" + str(accuracy))
+    loss, accuracy = model.evaluate(test_images, test_labels)
+
+    with open("./results/No Dropout Results.txt", 'w') as output_stream:
+        output_stream.write(f"Loss: {loss}\n")
+        output_stream.write(f"Accuracy: {accuracy}\n")
+
     # view a history of data
     plot_history(history)
+    total_time = end - start
+    print(f"Time: {total_time}")
 
