@@ -4,12 +4,14 @@
 # This seemed to be more simple than the class implementation; easier to see what network contains
 import tensorflow as tf
 from tensorflow import keras
-import sys
-from pprint import pprint
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import numpy as np
+import time
+import random
+from pprint import pprint
+
 
 def DropoutNetwork(input_data):
     model = keras.Sequential([
@@ -63,17 +65,12 @@ def plot_history(history):
     axs[1].legend(loc="upper right")
     axs[1].set_title("Error eval")
 
-    os.makedirs("./results", exist_ok=True)
-    plt.savefig("./results/epoch_results.png")
+    plt.savefig("DropoutResults.png")
 
 
 if __name__ == '__main__':
-    epoch_value = 1
 
-    # load data set
-    #(train_images, train_labels), (test_images, test_labels) = keras.datasets.fashion_mnist.load_data()
-
-    nba_train = pd.read_csv("C:/local/nba_stats/NBA_train_83-15.csv", header=None,
+    nba_train = pd.read_csv("test_train_data/NBA_train_83-15.csv", header=None,
                             names=["W/L", "MIN", "PTS", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%",
                                    "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "+/-", "POSS", "TS%",
                                    "OER"])
@@ -84,48 +81,51 @@ if __name__ == '__main__':
     nba_train_features = np.asarray(nba_train_features).astype(np.float)
     nba_train_labels = np.asarray(nba_train_labels).astype(np.float)
 
-    nba_train = pd.read_csv("C:/local/nba_stats/NBA_test_15-20.csv", header=None,
-                            names=["W/L", "MIN", "PTS", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%",
-                                   "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "+/-", "POSS", "TS%",
-                                   "OER"])
+    nba_test = pd.read_csv("test_train_data/NBA_test_15-20.csv", header=None,
+                           names=["W/L", "MIN", "PTS", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%",
+                                  "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "+/-", "POSS", "TS%",
+                                  "OER"])
 
-    nba_test_features = nba_train.copy()
+    nba_test_features = nba_test.copy()
     nba_test_labels = nba_test_features.pop("W/L")
 
     nba_test_features = np.asarray(nba_test_features).astype(np.double)
     nba_test_labels = np.asarray(nba_test_labels).astype(np.double)
 
-    # convert data set to be between 0 - 1
-    #train_images = train_images / 255.0
-    #test_images = test_images / 255.0
+    slice_value = 20000
+    nba_val_features = nba_train_features[:slice_value]
+    nba_val_labels = nba_train_labels[:slice_value]
 
-    # set aside validation images
-    #validation_images = train_images[:5000]
-    #validation_labels = train_labels[:5000]
+    nba_train_features = nba_train_features[slice_value:]
+    nba_train_labels = nba_train_labels[slice_value:]
 
-    nba_val_features = nba_train_features[31924:]
-    nba_val_labels = nba_train_labels[31924:]
-
-    nba_train_features = nba_train_features[:31924]
-    nba_train_labels = nba_train_labels[:31924]
+    # this website talks about needing to shuffle values, otherwise network fixates on first values seen
+    # https://pythonprogramming.net/loading-custom-data-deep-learning-python-tensorflow-keras/
+    # shuffle numpy arrays: https://stackoverflow.com/a/49755088
+    indices = np.arange(nba_train_features.shape[0])
+    np.random.shuffle(indices)
+    nba_train_features = nba_train_features[indices]
+    nba_train_labels = nba_train_labels[indices]
 
     # create a dropout network
     model = DropoutNetwork(nba_train_features)
 
     # fit our model to data
-    start = time.time()
-    history = model.fit(train_images, train_labels, epochs=100, validation_data=(validation_images, validation_labels), batch_size=32)
-    end = time.time()
+    train_start = time.time()
+    history = model.fit(nba_train_features, nba_train_labels, epochs=100, validation_data=(nba_val_features, nba_val_labels), batch_size=64)
+    train_end = time.time()
 
     # evaluate model with testing data
-    loss, accuracy = model.evaluate(test_images, test_labels)
-
-    with open("./results/No Dropout Results.txt", 'w') as output_stream:
-        output_stream.write(f"Loss: {loss}\n")
-        output_stream.write(f"Accuracy: {accuracy}\n")
+    # loss, accuracy = model.predict(nba_test_features, nba_test_labels)
+    predict_start = time.time()
+    # predictions = model.predict(nba_test_features, workers=4, use_multiprocessing=True)
+    predictions = model(nba_test_features, training=False)
+    predict_end = time.time()
 
     # view a history of data
     plot_history(history)
-    total_time = end - start
-    print(f"Time: {total_time}")
+    train_time = train_end - train_start
+    test_time = predict_end - predict_end
+    print(f"Training time: {train_time}")
+    print(f"Testing time: {test_time}")
 

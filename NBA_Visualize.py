@@ -4,10 +4,10 @@ import numpy
 import matplotlib.pyplot as plt
 
 #process stats based on team & season
-for stats_file in os.listdir("C:/local/nba_stats/"):
+for stats_file in os.listdir("/Users/joshl/Downloads/local_dir/NBA_Stats"):
 
     if stats_file.find("adv") > -1:
-        with open("C:/local/nba_stats/" + stats_file,'r') as seasonstats:
+        with open("/Users/joshl/Downloads/local_dir/NBA_Stats" + stats_file,'r') as seasonstats:
             rawstats = seasonstats.readlines()
 
         team_stats = []
@@ -83,17 +83,17 @@ for stats_file in os.listdir("C:/local/nba_stats/"):
         fig.tight_layout()
 
         tempstring = stats_file[:len(stats_file) - 4] + "_adv_comp.jpg"
-        plt.savefig("C:/local/nba_stats/figs/" + tempstring)
+        plt.savefig("/Users/joshl/Downloads/local_dir/fig/" + tempstring)
         plt.close()
         #plt.show()
 
 
 
 #process stats based on team & season averages
-for stats_file in os.listdir("C:/local/nba_stats/"):
+for stats_file in os.listdir("/Users/joshl/Downloads/local_dir/NBA_Stats"):
 
     if stats_file.find("adv") > -1:
-        with open("C:/local/nba_stats/" + stats_file,'r') as seasonstats:
+        with open("/Users/joshl/Downloads/local_dir/NBA_Stats/" + stats_file,'r') as seasonstats:
             rawstats = seasonstats.readlines()
 
         avg_stats = []
