@@ -13,11 +13,8 @@ import random
 from pprint import pprint
 
 
-def DropoutNetwork(input_data):
+def DropoutNetwork():
     model = keras.Sequential([
-        # input layer; flatten will make a 2D array [[1, 2], [3, 4]] into a 1D array [1, 2, 3, 4]
-        #keras.layers.Flatten(input_shape=(input_data.shape[1], input_data.shape[2])),
-
         # first dense layer
         keras.layers.Dense(200, activation='relu'),
         keras.layers.Dropout(0.3),
@@ -108,7 +105,7 @@ if __name__ == '__main__':
     nba_train_labels = nba_train_labels[indices]
 
     # create a dropout network
-    model = DropoutNetwork(nba_train_features)
+    model = DropoutNetwork()
 
     # fit our model to data
     train_start = time.time()
