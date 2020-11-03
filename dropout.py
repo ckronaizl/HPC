@@ -2,45 +2,67 @@
 # current code from: https://github.com/musikalkemist/DeepLearningForAudioWithPython/blob/master/14-%20Solving%20overfitting%20in%20neural%20networks/code/solving_overfitting.py
 # video on code at: https://www.youtube.com/watch?v=Gf5DO6br0ts&list=PL-wATfeyAMNrtbkCNsLcpoAyBBRJZVlnf&index=14
 # This seemed to be more simple than the class implementation; easier to see what network contains
+import os
 import tensorflow as tf
 from tensorflow import keras
 import matplotlib.pyplot as plt
-import os
+
 import pandas as pd
 import numpy as np
-import time
 import random
+
+import time
+import shutil
+import datetime
+import sys
 from pprint import pprint
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-def DropoutNetwork():
+
+def get_time():
+    time = datetime.datetime.now()
+    year = time.strftime("%Y")  # full year
+    month = time.strftime("%b")  # short-hand abbreviation
+    day = time.strftime("%d")  # 0-padded value
+    hour = time.strftime("%I")  # 12 hour format with padded 0
+    minute = time.strftime("%M")  # minute with padded 0
+    second = time.strftime("%S")
+    am_pm = time.strftime("%p").lower()  # am or pm, lowercase
+
+    date = f"{month}-{day}-{year} {hour}:{minute}:{second}{am_pm}"
+    return date
+
+
+def DropoutNetwork(one, two, three):
+    dropout_rate = 0.5
     model = keras.Sequential([
-        # first dense layer
-        keras.layers.Dense(200, activation='relu'),
-        keras.layers.Dropout(0.3),
 
-        # second dense layer
-        keras.layers.Dense(100, activation='relu'),
-        keras.layers.Dropout(0.3),
+        keras.layers.Dense(one, activation="relu"),
+        keras.layers.Dropout(dropout_rate),
 
-        # third dense layer
-        keras.layers.Dense(60, activation='relu'),
-        keras.layers.Dropout(0.3),
+        keras.layers.Dense(two, activation="relu"),
+        keras.layers.Dropout(dropout_rate),
 
-        # output layer
-        keras.layers.Dense(10, activation="softmax")
+        keras.layers.Dense(three, activation="relu"),
+        keras.layers.Dropout(dropout_rate),
+
+        keras.layers.Dense(1, activation="sigmoid")
     ])
 
     # compile model/graph
+    # Stochastic Gradient Descent (SGD) article: https://towardsdatascience.com/stochastic-gradient-descent-clearly-explained-53d239905d31
+    # why momentum is important: https://medium.com/analytics-vidhya/why-use-the-momentum-optimizer-with-minimal-code-example-8f5d93c33a53
     optimizer = keras.optimizers.Adam(learning_rate=0.0001)
+
     model.compile(optimizer=optimizer,
-                  loss="sparse_categorical_crossentropy",
+                  loss="binary_crossentropy",
                   metrics=['accuracy'])
 
     return model
 
 
-def plot_history(history):
+def plot_history(history, one, two, three):
 
     # create a new figure with two subplots
     fig, axs = plt.subplots(2)
@@ -62,7 +84,11 @@ def plot_history(history):
     axs[1].legend(loc="upper right")
     axs[1].set_title("Error eval")
 
-    plt.savefig("DropoutResults.png")
+    save_path = os.getcwd()
+    save_path = os.path.join(save_path, "results", str(one), str(two), str(three))
+    os.makedirs(save_path, exist_ok=True)
+    save_path = os.path.join(save_path, f"{one}.{two}.{three}.png")
+    plt.savefig(save_path)
 
 
 if __name__ == '__main__':
@@ -89,7 +115,8 @@ if __name__ == '__main__':
     nba_test_features = np.asarray(nba_test_features).astype(np.double)
     nba_test_labels = np.asarray(nba_test_labels).astype(np.double)
 
-    slice_value = 20000
+    # use 20% as validation
+    slice_value = int(len(nba_train_labels) * 0.2)
     nba_val_features = nba_train_features[:slice_value]
     nba_val_labels = nba_train_labels[:slice_value]
 
@@ -105,24 +132,27 @@ if __name__ == '__main__':
     nba_train_labels = nba_train_labels[indices]
 
     # create a dropout network
-    model = DropoutNetwork()
+    # start, end, step
+    """
+    I have no idea if attempting to determine the best number of nodes like this is the
+        best implementation, but I guess that's what HPC is for  ¯\_(ツ)_/¯ 
+    """
+    for one in range(10, 151, 10):
+        for two in range(10, 151, 10):
+            for three in range(10, 151, 10):
+                print(f"Layer 1 = {one}")
+                print(f"Layer 2 = {two}")
+                print(f"Layer 3 = {three}")
+                print("\n")
+                model = DropoutNetwork(one, two, three)
 
-    # fit our model to data
-    train_start = time.time()
-    history = model.fit(nba_train_features, nba_train_labels, epochs=100, validation_data=(nba_val_features, nba_val_labels), batch_size=64)
-    train_end = time.time()
+                # fit our model to data
+                history = model.fit(nba_train_features, nba_train_labels, epochs=100, validation_data=(nba_val_features, nba_val_labels), batch_size=64, verbose=0)
 
-    # evaluate model with testing data
-    # loss, accuracy = model.predict(nba_test_features, nba_test_labels)
-    predict_start = time.time()
-    # predictions = model.predict(nba_test_features, workers=4, use_multiprocessing=True)
-    predictions = model(nba_test_features, training=False)
-    predict_end = time.time()
+                # evaluate model with testing data
+                # loss, accuracy = model.predict(nba_test_features, nba_test_labels)
+                # predictions = model.predict(nba_test_features, workers=4, use_multiprocessing=True)
+                predictions = model(nba_test_features, training=False)
 
-    # view a history of data
-    plot_history(history)
-    train_time = train_end - train_start
-    test_time = predict_end - predict_end
-    print(f"Training time: {train_time}")
-    print(f"Testing time: {test_time}")
-
+                # view a history of data
+                plot_history(history, one, two, three)
