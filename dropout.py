@@ -14,27 +14,28 @@ from pprint import pprint
 
 
 def DropoutNetwork():
+    dropout_rate = 0.5
     model = keras.Sequential([
-        # first dense layer
-        keras.layers.Dense(200, activation='relu'),
-        keras.layers.Dropout(0.3),
 
-        # second dense layer
-        keras.layers.Dense(100, activation='relu'),
-        keras.layers.Dropout(0.3),
+        keras.layers.Dense(one, activation="relu"),
+        keras.layers.Dropout(dropout_rate),
 
-        # third dense layer
-        keras.layers.Dense(60, activation='relu'),
-        keras.layers.Dropout(0.3),
+        keras.layers.Dense(two, activation="relu"),
+        keras.layers.Dropout(dropout_rate),
 
-        # output layer
-        keras.layers.Dense(10, activation="softmax")
+        keras.layers.Dense(three, activation="relu"),
+        keras.layers.Dropout(dropout_rate),
+
+        keras.layers.Dense(1, activation="sigmoid")
     ])
 
     # compile model/graph
+    # Stochastic Gradient Descent (SGD) article: https://towardsdatascience.com/stochastic-gradient-descent-clearly-explained-53d239905d31
+    # why momentum is important: https://medium.com/analytics-vidhya/why-use-the-momentum-optimizer-with-minimal-code-example-8f5d93c33a53
     optimizer = keras.optimizers.Adam(learning_rate=0.0001)
+
     model.compile(optimizer=optimizer,
-                  loss="sparse_categorical_crossentropy",
+                  loss="binary_crossentropy",
                   metrics=['accuracy'])
 
     return model
