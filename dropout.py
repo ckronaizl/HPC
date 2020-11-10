@@ -10,6 +10,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import random
+import multiprocessing as mp
 
 import time
 import shutil
@@ -84,7 +85,18 @@ def plot_history(history, one, two, three):
     axs[1].legend(loc="upper right")
     axs[1].set_title("Error eval")
 
+    plt.close()
+
     return plt
+
+
+def path_exists(one, two, three):
+    save_path = os.getcwd()
+    save_path = os.path.join(save_path, "results", str(one), str(two), str(three))
+    if os.path.exists(save_path):
+        return True
+    else:
+        return False
 
 
 def save_plot_pickle_results(plot, predictions, history, one, two, three):
@@ -101,6 +113,31 @@ def save_plot_pickle_results(plot, predictions, history, one, two, three):
     # save object to file
     pickle.dump(predictions, open(pickle_path, 'wb'))
     pickle.dump(history.history, open(history_path, 'wb'))
+
+
+def multi_process_network(iteration,
+                          nba_train_features, nba_train_labels,
+                          nba_val_features, nba_val_labels,
+                          nba_test_features):
+    # do not execute dropout network if we have done this already path exists
+
+    input_layer = iteration[0]
+    hidden_layer_one = iteration[1]
+    hidden_layer_two = iteration[2]
+    model = DropoutNetwork(input_layer, hidden_layer_one, hidden_layer_two)
+
+    # fit our model to data
+    history = model.fit(nba_train_features, nba_train_labels, epochs=100, validation_data=(nba_val_features, nba_val_labels), batch_size=64, verbose=0)
+
+    # evaluate model with testing data
+    # loss, accuracy = model.predict(nba_test_features, nba_test_labels)
+    predictions = model.predict(nba_test_features, workers=4, use_multiprocessing=True)
+
+    # view a history of data
+    plot = plot_history(history, input_layer, hidden_layer_one, hidden_layer_two)
+
+    save_plot_pickle_results(plot, predictions, history, input_layer, hidden_layer_one, hidden_layer_two)
+    print(f"Completed {iteration}")
 
 
 if __name__ == '__main__':
@@ -149,24 +186,36 @@ if __name__ == '__main__':
     I have no idea if attempting to determine the best number of nodes like this is the
         best implementation, but I guess that's what HPC is for  ¯\_(ツ)_/¯ 
     """
-    for input_layer in range(10, 151, 10):
-        for hidden_layer_one in range(10, 151, 10):
-            for hidden_layer_two in range(10, 151, 10):
-                print(f"Layer 1 = {input_layer}")
-                print(f"Layer 2 = {hidden_layer_one}")
-                print(f"Layer 3 = {hidden_layer_two}")
-                print("\n")
-                model = DropoutNetwork(input_layer, hidden_layer_one, hidden_layer_two)
 
-                # fit our model to data
-                history = model.fit(nba_train_features, nba_train_labels, epochs=100, validation_data=(nba_val_features, nba_val_labels), batch_size=64, verbose=0)
+    """
+    layers[0], layers[1], layers[2],
+    nba_train_features, nba_train_labels, nba_val_features,
+    nba_val_labels, nba_test_features
+    """
 
-                # evaluate model with testing data
-                # loss, accuracy = model.predict(nba_test_features, nba_test_labels)
-                predictions = model.predict(nba_test_features, workers=4, use_multiprocessing=True)
+    # generate our list of possible nodes
+    total_not_found = 0
+    layers = set()
+    for x in range(20, 141, 20):
+        for y in range(20, 141, 20):
+            for z in range(20, 141, 20):
+                if not path_exists(x, y, z):  # only iterate if we have not done it yet
+                    total_not_found += 1
+                    layers.add((x, y, z))
 
-                # view a history of data
-                plot = plot_history(history, input_layer, hidden_layer_one, hidden_layer_two)
+    for item in layers:
+        print(f"Not found: {item}")
+    print(f"Total: {total_not_found}")
+    # create a 'pool' of all possible workers
+    pool = mp.Pool(mp.cpu_count())
 
-                save_plot_pickle_results(plot, predictions, history, input_layer, hidden_layer_one, hidden_layer_two)
-                exit(0)
+    # iterate through our possible nodes
+    for iteration in layers:
+        # send a worker to complete the path
+        pool.apply_async(multi_process_network, args=(iteration, nba_train_features, nba_train_labels, nba_val_features, nba_val_labels, nba_test_features))
+
+    # bring workers back together
+    pool.close()
+    pool.join()
+
+    print("COMPLETE")
