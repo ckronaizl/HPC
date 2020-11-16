@@ -17,13 +17,13 @@ def DropoutNetwork():
     dropout_rate = 0.5
     model = keras.Sequential([
 
-        keras.layers.Dense(one, activation="relu"),
+        keras.layers.Dense(80, activation="relu"),
         keras.layers.Dropout(dropout_rate),
 
-        keras.layers.Dense(two, activation="relu"),
+        keras.layers.Dense(80, activation="relu"),
         keras.layers.Dropout(dropout_rate),
 
-        keras.layers.Dense(three, activation="relu"),
+        keras.layers.Dense(120, activation="relu"),
         keras.layers.Dropout(dropout_rate),
 
         keras.layers.Dense(1, activation="sigmoid")
@@ -63,7 +63,8 @@ def plot_history(history):
     axs[1].legend(loc="upper right")
     axs[1].set_title("Error eval")
 
-    plt.savefig("DropoutResults.png")
+    plt.savefig("Dropout Results.png")
+    plt.close()
 
 
 if __name__ == '__main__':
@@ -110,7 +111,7 @@ if __name__ == '__main__':
 
     # fit our model to data
     train_start = time.time()
-    history = model.fit(nba_train_features, nba_train_labels, epochs=100, validation_data=(nba_val_features, nba_val_labels), batch_size=64)
+    history = model.fit(nba_train_features, nba_train_labels, epochs=3, validation_data=(nba_val_features, nba_val_labels), batch_size=64)
     train_end = time.time()
 
     # evaluate model with testing data
