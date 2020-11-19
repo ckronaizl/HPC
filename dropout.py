@@ -13,27 +13,9 @@ import random
 import multiprocessing as mp
 
 import time
-import shutil
 import datetime
-import sys
-from pprint import pprint
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-
-def get_time():
-    time = datetime.datetime.now()
-    year = time.strftime("%Y")  # full year
-    month = time.strftime("%b")  # short-hand abbreviation
-    day = time.strftime("%d")  # 0-padded value
-    hour = time.strftime("%I")  # 12 hour format with padded 0
-    minute = time.strftime("%M")  # minute with padded 0
-    second = time.strftime("%S")
-    am_pm = time.strftime("%p").lower()  # am or pm, lowercase
-
-    date = f"{month}-{day}-{year} {hour}:{minute}:{second}{am_pm}"
-    return date
-
 
 def DropoutNetwork(one, two, three):
     dropout_rate = 0.5
@@ -99,7 +81,7 @@ def path_exists(one, two, three):
         return False
 
 
-def save_plot_pickle_results(plot, predictions, history, one, two, three):
+def pickle_results(plot, predictions, history, one, two, three):
     save_path = os.getcwd()
     save_path = os.path.join(save_path, "results", str(one), str(two), str(three))
     os.makedirs(save_path, exist_ok=True)
@@ -136,8 +118,9 @@ def multi_process_network(iteration,
     # view a history of data
     plot = plot_history(history, input_layer, hidden_layer_one, hidden_layer_two)
 
-    save_plot_pickle_results(plot, predictions, history, input_layer, hidden_layer_one, hidden_layer_two)
-    print(f"Completed {iteration}")
+    pickle_results(plot, predictions, history, input_layer, hidden_layer_one, hidden_layer_two)
+    with open("results/completed_iterations.txt", 'a') as output_stream:
+        output_stream.write(f"Completed {iteration}\n")
 
 
 if __name__ == '__main__':
@@ -203,13 +186,17 @@ if __name__ == '__main__':
                     total_not_found += 1
                     layers.add((x, y, z))
 
-    for item in layers:
-        print(f"Not found: {item}")
-    print(f"Total: {total_not_found}")
+    with open("results/incomplete_data.txt", 'w') as output_stream:
+        output_stream.write("This is a list of node combinations that have not been complete\n")
+        for item in layers:
+            output_stream.write(f"To Do: {item}\n")
+        output_stream.write(f"Total node combinations not found: {total_not_found}\n")
+
     # create a 'pool' of all possible workers
     pool = mp.Pool(mp.cpu_count())
 
     # iterate through our possible nodes
+    start_time = time.time()
     for iteration in layers:
         # send a worker to complete the path
         pool.apply_async(multi_process_network, args=(iteration, nba_train_features, nba_train_labels, nba_val_features, nba_val_labels, nba_test_features))
@@ -217,5 +204,7 @@ if __name__ == '__main__':
     # bring workers back together
     pool.close()
     pool.join()
-
-    print("COMPLETE")
+    end_time = time.time()
+    with open("results/incomplete_data.txt") as output_stream:
+        output_stream.write("")
+        output_stream.write(f"Total time: {end_time - start_time}")
