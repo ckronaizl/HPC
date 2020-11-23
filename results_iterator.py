@@ -11,12 +11,10 @@ Methods:
         a) If network ability to predict is better than next one, keep current and move on
     4)
 """
+
 import os
-import shutil
 import pickle
-from pprint import pprint
 import pandas as pd
-import matplotlib.pyplot as plt
 
 root_dir = os.path.join(os.getcwd(), "results")
 
@@ -28,69 +26,20 @@ prediction_incorrect = int()
 prediction_path = str()
 
 
-def plot_history(history):
-
-    # create a new figure with two subplots
-    fig, axs = plt.subplots(2)
-
-    # history is a dictionary
-    # history has four values: accuracy, val_accuracy, loss, val_loss
-    # create new plot
-    axs[0].plot(history["accuracy"], label="train accuracy")
-    axs[0].plot(history["val_accuracy"], label="test accuracy")
-    axs[0].set_ylabel("Accuracy")
-    axs[0].legend(loc="lower right")
-    axs[0].set_title("Accuracy eval")
-
-    # create error subplot
-    axs[1].plot(history["loss"], label="train error")
-    axs[1].plot(history["val_loss"], label="test error")
-    axs[1].set_ylabel("Error")
-    axs[1].set_xlabel("Epoch")
-    axs[1].legend(loc="upper right")
-    axs[1].set_title("Error eval")
-
-    return plt
-
-
-def generate_graph():
-    """
-    Some of the graphs in the results were not generated. This function aims to fix this by generating a new graph for all data
-    :return:
-    """
-    print("")
-    list_files = list()
-    for subdir, dir, files in os.walk(root_dir):
-        for file in sorted(files):
-            if "history.pkl" in file:
-                file_path = os.path.join(subdir, file)
-                history = pickle.load(open(file_path, "rb"))
-                plot = plot_history(history)
-
-                save_folder = "/".join(file_path.split("/")[:-1])
-                file_name = ".".join(file.split(".")[:3]) + ".graph.png"
-                new_path = os.path.join(save_folder, file_name)
-
-                print(new_path)
-
-                plot.savefig(f"{new_path}")
-                plot.close()
-
-
 def get_max_accuracy(history_obj, path):
     """
     This function compares the global validation accuracy with accuracy from history_obj
     If the history_obj validation accuracy is greater than the global value, the global value is replaced
-    :param history_obj:
-    :param path:
+    :param history_obj: this contains history, testing accuracy, testing loss, and validation loss from model
+    :param path: path of data
     :return:
     """
-    # dont need these objects for now
+    # don't need these objects for now, maybe they'll be of use later
     # testing_accuracy = history_obj["accuracy"]
     # testing_loss = history_obj["loss"]
     # validate_loss = history_obj["val_loss"]
 
-    # we need access to these variables inside the funciton
+    # need to change global value of variables
     global max_val_accuracy
     global max_val_accuracy_path
 
@@ -108,7 +57,7 @@ def get_highest_prediction(prediction_obj, path):
     :param path:
     :return:
     """
-    # make these variables available to function
+    # need to change global value of variables
     global prediction_correct
     global prediction_incorrect
     global prediction_path
@@ -163,6 +112,7 @@ def check_data():
 
     :return:
     """
+    # need to change global value of variables
     global max_val_accuracy
     global max_val_accuracy_path
     global prediction_correct
@@ -181,38 +131,14 @@ def check_data():
             else:
                 continue
 
-    print(f"Maximum accuracy achieved: {max_val_accuracy}")
-    print(f"Path to data: {max_val_accuracy_path}")
-    print()
-    print(f"Max correct predictions achieved: {prediction_correct}")
-    print(f"Minimum incorrect predictions: {prediction_incorrect}")
-    print(f"Path to data: {prediction_path}")
-
-
-def remove_odd_folders():
-    """
-    When initially running multiprocessing dropout network, too many folders were made; we skipped by 10. I changed this to skip by 20
-    As a result, we don't need the odd folders. This function removes them
-    :return:
-    """
-    folders_removed = 0
-    for root, subdir, files in os.walk(root_dir):
-        for dir in subdir:
-            dir_path = os.path.join(root, dir)
-            if len(str(dir)) == 2:
-                if int(str(dir)[0]) % 2 == 1:
-                    shutil.rmtree(dir_path)
-                    folders_removed += 1
-            elif len(str(dir)) == 3:
-                if int(str(dir)[1]) % 2 == 1:
-                    shutil.rmtree(dir_path)
-                    folders_removed += 1
-    if folders_removed == 1:
-        print(f"Removed {folders_removed} folder")
-    else:
-        print(f"Removed {folders_removed} folders")
+    with open("results/results_iterator.txt", 'w') as output_stream:
+        output_stream.write(f"Maximum accuracy achieved: {max_val_accuracy}\n")
+        output_stream.write(f"Path to data: {max_val_accuracy_path}\n")
+        output_stream.write("")
+        output_stream.write(f"Max correct predictions achieved: {prediction_correct}\n")
+        output_stream.write(f"Minimum incorrect predictions: {prediction_incorrect}\n")
+        output_stream.write(f"Path to data: {prediction_path}\n")
 
 
 if __name__ == '__main__':
-    # generate_graph()
     check_data()
