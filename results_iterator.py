@@ -12,11 +12,8 @@ Methods:
     4)
 """
 import os
-import shutil
 import pickle
-from pprint import pprint
 import pandas as pd
-import matplotlib.pyplot as plt
 
 root_dir = os.path.join(os.getcwd(), "results")
 
