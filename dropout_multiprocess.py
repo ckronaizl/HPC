@@ -17,6 +17,7 @@ import datetime
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+
 def DropoutNetwork(one, two, three):
     dropout_rate = 0.5
     model = keras.Sequential([
