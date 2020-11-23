@@ -28,51 +28,6 @@ prediction_incorrect = int()
 prediction_path = str()
 
 
-def plot_history(history):
-
-    # create a new figure with two subplots
-    fig, axs = plt.subplots(2)
-
-    # history is a dictionary
-    # history has four values: accuracy, val_accuracy, loss, val_loss
-    # create new plot
-    axs[0].plot(history["accuracy"], label="train accuracy")
-    axs[0].plot(history["val_accuracy"], label="test accuracy")
-    axs[0].set_ylabel("Accuracy")
-    axs[0].legend(loc="lower right")
-    axs[0].set_title("Accuracy eval")
-
-    # create error subplot
-    axs[1].plot(history["loss"], label="train error")
-    axs[1].plot(history["val_loss"], label="test error")
-    axs[1].set_ylabel("Error")
-    axs[1].set_xlabel("Epoch")
-    axs[1].legend(loc="upper right")
-    axs[1].set_title("Error eval")
-
-    return plt
-
-
-def generate_graph():
-    """
-    Some of the graphs in the results were not generated. This function aims to fix this by generating a new graph for all data
-    :return:
-    """
-    for subdir, dir, files in os.walk(root_dir):
-        for file in sorted(files):
-            if "history.pkl" in file:
-                file_path = os.path.join(subdir, file)
-                history = pickle.load(open(file_path, "rb"))
-                plot = plot_history(history)
-
-                save_folder = "/".join(file_path.split("/")[:-1])
-                file_name = ".".join(file.split(".")[:3]) + ".graph.png"
-                new_path = os.path.join(save_folder, file_name)
-
-                plot.savefig(f"{new_path}")
-                plot.close()
-
-
 def get_max_accuracy(history_obj, path):
     """
     This function compares the global validation accuracy with accuracy from history_obj
