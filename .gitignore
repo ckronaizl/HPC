@@ -1,3 +1,5 @@
-/nba_stats
-/venv
-/.idea
+/nba_stats/
+/venv/
+/.idea/
+/results/
+/test_train_data
