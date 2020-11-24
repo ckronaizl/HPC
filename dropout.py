@@ -67,32 +67,9 @@ def plot_history(history):
     plt.close()
 
 
-def predict_input_data(model):
-    """
-    This function will attempt to predict an outcome based on new data, input from a file
-    It will use the trained model that is trained during the running of this file
-    :param model: The trained model
-    :return:
-    """
-    input_file = pd.read_csv("custom_test.csv", header=None,
-                             names=["W/L", "MIN", "PTS", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%",
-                                    "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "+/-", "POSS", "TS%",
-                                    "OER"])
-    input_features = input_file.copy()
-    input_labels = input_features.pop("W/L")
-
-    input_features = np.asarray(input_features).astype(np.float)
-    input_labels = np.asarray(input_labels).astype(np.float)
-
-    input_predict = model(input_features, training=False)
-    print("Real result: 0 (Loss)")
-
-    print(f"Predicted result: {input_predict}")
-
-
 if __name__ == '__main__':
 
-    nba_train = pd.read_csv("test_train_data/NBA_train_83-15.csv", header=None,
+    nba_train = pd.read_csv("test_train_data/NBA_train_83-15.csv", header=None, na_values="-",
                             names=["W/L", "MIN", "PTS", "FGM", "FGA", "FG%", "3PM", "3PA", "3P%", "FTM", "FTA", "FT%",
                                    "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "+/-", "POSS", "TS%",
                                    "OER"])
@@ -138,9 +115,7 @@ if __name__ == '__main__':
     train_end = time.time()
 
     # evaluate model with testing data
-    # loss, accuracy = model.predict(nba_test_features, nba_test_labels)
     predict_start = time.time()
-    # predictions = model.predict(nba_test_features, workers=4, use_multiprocessing=True)
     predictions = model(nba_test_features, training=False)
     predict_end = time.time()
 
@@ -151,5 +126,11 @@ if __name__ == '__main__':
     print(f"Training time: {train_time}")
     print(f"Testing time: {test_time}")
 
-    predict_input_data(model)
+    # save model as png
+    keras.utils.plot_model(model, to_file="model_visual.png")
+    keras.utils.plot_model(model, to_file="model_visual_shapes.png", show_shapes=True)
+    keras.utils.plot_model(model, to_file="model_visual_layers.png", show_layer_names=True)
+    keras.utils.plot_model(model, to_file="model_visual_shapes_layers.png", show_shapes=True, show_layer_names=True)
+
+
 

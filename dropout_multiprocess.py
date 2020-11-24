@@ -68,6 +68,7 @@ def plot_history(history, one, two, three):
     axs[1].legend(loc="upper right")
     axs[1].set_title("Error eval")
 
+    plt.savefig(f"results/{one}/{two}/{three}/{one}.{two}.{three}.graph.png")
     plt.close()
 
     return plt
